@@ -1,0 +1,11 @@
+<!--pages/home/home.wxml-->
+<view class="demo-canvas-box">
+  <canvas canvas-id="myCanvas" 
+          disable-scroll="true"
+          style="width: {{canvasWidth}}px; height: {{canvasHeight}}px"
+          bindtouchstart="bindtouchstart"
+          bindtouchmove="bindtouchmove"
+          bindtouchend="bindtouchend"
+          bindtouchcancel="bindtouchcancel"
+          ></canvas>
+</view>
