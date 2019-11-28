@@ -5,8 +5,7 @@ const guid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'; // GUID格式
 
 class Store {
   constructor() {
-    this.store = {}; //使用对象存储，字典查询更快捷
-    this.length = 0;
+    this.store = [];
   }
 
   //添加几何实例
@@ -15,39 +14,60 @@ class Store {
       throw Error("error: Shape has not id!");
     }
 
-    this.store[shape.guid] = shape;
-
-    this.length++;
+    this.store.push(shape);
   }
 
   //删除某个几何
   delete(shape) {
-    if (this.store[shape.guid]) {
-      delete this.store[shape.guid];
+    if (!this.store.length) {
+      return;
+    }
+    let deleteIndex = null;
 
-      if (this.length > 0) {
-        this.length--;
+    for (let i = 0, len = this.store.length; i < len; i++) {
+      if (this.store[i].guid === shape.guid) {
+        deleteIndex = i;
+        break;
       }
+    }
+
+    if (deleteIndex !== null) {
+      this.store.splice(deleteIndex, 1);
     }
   }
 
   //清空仓库
   clear() {
-    this.store = {};
-    this.length = 0;
+    this.store = [];
   }
 
   //获取仓库存储的几何图形数量
   getLength() {
-    return this.length;
+    return this.store.length;
   }
 
   //根据全局guid查找几何,返回当前几何实例, 若找不到，返回默认empty字符串提示
   find(guid) {
-    if (guid && this.length > 0) {
-      return this.store[guid] || 'empty';
+    if (guid && this.store.length > 0) {
+      let aim = this.store.filter(v => {
+        return v.guid === guid
+      })
+      return aim.length ? aim[0] : 'empty';
+      // return this.store[guid] || 'empty';
     }
     return 'empty';
+  }
+
+  getIndex(shape) {
+    let idx = null;
+    for (let i = 0, len = this.store.length; i < len; i++) {
+      if (this.store[i].guid === shape.guid) {
+        idx = i;
+        break;
+      }
+    }
+
+    return idx;
   }
 }
 
@@ -197,19 +217,7 @@ class Shape {
 
   //检测点是否在几何内,返回true表示在几何内，否则为几何外
   detect(location) {
-    // if(touchType === "touchEnd"){
-    //   this.isTouch = false;
-    //   console.log(touchType, this.isTouch);
-    //   return
-    // }
-
     let flag = Common._detect(this.shape, location);
-
-    // if(flag && touchType === "touchStart"){
-    //   this.isTouch = true;
-    //   this.shape.getStartCoordinates(location);
-    // }
-    // console.log(touchType, this.isTouch);
 
     return flag;
   }
@@ -269,23 +277,25 @@ class WxCanvas {
   //添加几何模型、文字、或图片
   add(shape) {
     this.store.add(shape);
-
-    shape.setZIndex(this.store.length); //设置初始图层层级
   }
 
   //更新Canvas状态
   update() {
-    let {length, store} = this.store; //存储图层几何仓库
+    let {store} = this.store; //存储图层几何仓库
 
-    if (!length) {
+    if (!store.length) {
       return;
     }
 
-    for (let key in store) {
-      if (store.hasOwnProperty(key)) {
-        store[key]._draw(this.canvas);
-      }
-    }
+    //清除画布内容
+    let {x, y, w, h} = this.options;
+    this.canvas.clearRect(x, y, w, h);
+
+    //重新绘制
+    store.forEach((v, index) => {
+      v.setZIndex(index + 1); //设置初始图层层级
+      v._draw(this.canvas);
+    });
 
     this.canvas.draw();
   }
@@ -310,18 +320,18 @@ class WxCanvas {
   start(e) {
     let _t = this;
     let location = {x: e.touches[0].x, y: e.touches[0].y}; //指尖触摸坐标
-    let {store, length} = this.store;
-    let activeObjs = {}, selectObj = null;
+    let {store} = this.store;
+    let touchRender = [], activeGroupObj = [], activeObjs = [], selectObj = null;
 
     //检查是在某个图形几何有效区域内
-    if (length > 0) {
-      for (let key in store) {
-        if (store.hasOwnProperty(key)) {
-          activeObjs[key] = store[key];
-          let flag = store[key].detect(location);
-          if (flag) {
-            _t.touchShapes.push(store[key]);
-          }
+    if (store.length > 0) {
+      for (let i = 0, len = store.length; i < len; i++) {
+        let item = store[i];
+        let flag = item.detect(location);
+        activeObjs.push(item);
+
+        if (flag) {
+          _t.touchShapes.push(item);
         }
       }
 
@@ -332,23 +342,19 @@ class WxCanvas {
       } else if (this.touchShapes.length === 1) {
         selectObj = this.touchShapes[0];
 
-        // if(activeObjs[selectObj.guid]){
-        //   delete this.store[selectObj.guid];
-        //   delete activeObjs[selectObj.guid];
-        // }
-        //
-        // selectObj.guid = selectObj.getGuid();
-        //
-        // activeObjs[selectObj.guid] = selectObj;
-        //
-        // this.store = activeObjs;
-        //
-        // // let count = 0;
-        // // for(let key in this.store){
-        // //   store[key].zIndex = ++count;
-        // // }
-        //
-        // this.update();
+        if (this.preserveObjectStacking) {
+          selectObj.start(location);
+          return;
+        }
+
+        let idx = this.store.getIndex(selectObj);
+
+        store.splice(idx, 1);
+
+        store.push(selectObj);
+
+        this.update();
+
         selectObj.start(location);
       }
     }
@@ -357,10 +363,10 @@ class WxCanvas {
   //触摸事件移动
   move(e) {
     let location = {x: e.touches[0].x, y: e.touches[0].y}; //指尖触摸坐标
-    let {store, length} = this.store;
+    let {store} = this.store;
 
     //检查是在某个图形几何有效区域内
-    if (length > 0) {
+    if (store.length > 0) {
       for (let key in store) {
         if (store.hasOwnProperty(key)) {
           store[key].move(location);
@@ -373,14 +379,12 @@ class WxCanvas {
 
   //触摸事件结束
   end(e) {
-    let {store, length} = this.store;
+    let {store} = this.store;
 
-    if (length > 0) {
-      for (let key in store) {
-        if (store.hasOwnProperty(key)) {
-          store[key].end();
-        }
-      }
+    if (store.length > 0) {
+      store.forEach(v => {
+        v.end();
+      });
     }
 
     this.touchShapes = [];

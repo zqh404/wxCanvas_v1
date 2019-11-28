@@ -63,7 +63,7 @@ module.exports = {
     let i, j, flag = false;
     let {x, y} = location;
 
-    if(offset.minX > x || offset.maxX < x || offset.minY > y || offset.maxY < y){
+    if (offset.minX > x || offset.maxX < x || offset.minY > y || offset.maxY < y) {
       return flag = false
     }
 
@@ -82,5 +82,35 @@ module.exports = {
     let {realPoints, offset} = shape;
     let flag = this.pnpoly(realPoints.length, realPoints, offset, location);
     return flag;
+  },
+
+  geRange(options) {
+    let offset = {minX: null, minY: null, maxX: null, maxY: null};
+
+    options.forEach(point => {
+      if (point[0] > offset.maxX) {
+        offset.maxX = point[0];
+      }
+      if (!offset.minX && offset.minX !== 0) {
+        offset.minX = point[0];
+      }
+      if (offset.minX && point[0] < offset.minX) {
+        offset.minX = point[0];
+      }
+
+      if (point[1] > offset.maxY) {
+        offset.maxY = point[1];
+      }
+
+      if (!offset.minY && offset.minY !== 0) {
+        offset.minY = point[1];
+      }
+
+      if (offset.minY && point[1] < offset.minY) {
+        offset.minY = point[1];
+      }
+    })
+
+    return offset;
   }
 }

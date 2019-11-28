@@ -44,7 +44,7 @@ Page({
     // context.draw()
 
     this.wxCanvas = new WxCanvas(context, {
-      x: 0, y: 0, w: sWidth, h: sHeight
+      x: 0, y: 0, w: sWidth, h: sHeight, preserveObjectStacking: true
     });
 
 
@@ -77,8 +77,8 @@ Page({
       y: 250,
       r: 100,
       fillMode: "fill",
-      fillColor: "#36BBA6",
-      strokeColor: "#36BBA6",
+      fillColor: "#36BBf0",
+      strokeColor: "#36BBf0",
       // apiMode: true
     });
 
@@ -89,8 +89,8 @@ Page({
       a: 100,
       b: 50,
       illMode: "fill",
-      fillColor: "#36BBA6",
-      strokeColor: "#36BBA6",
+      fillColor: "#7FFFD4",
+      strokeColor: "#7FFFD4",
       apiMode: true
     })
 
@@ -123,13 +123,14 @@ Page({
 
     var img = new Shape("img", { x: 100, y: 100, w: 100, h: 100, file: "./logo.png"});
 
-    // this.wxCanvas.add(circle);
-    // this.wxCanvas.add(text);
-    // this.wxCanvas.add(img);
+    this.wxCanvas.add(polygon);
+  
+    this.wxCanvas.add(img);
+    this.wxCanvas.add(polygon);
 
     this.wxCanvas.add(rect);
-    this.wxCanvas.add(rect1);
-
+    this.wxCanvas.add(text);
+    this.wxCanvas.add(ellipse);
     // this.wxCanvas.removeShape(img);
 
     this.wxCanvas.update();

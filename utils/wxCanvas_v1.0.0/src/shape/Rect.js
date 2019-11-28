@@ -98,30 +98,12 @@ class Rect {
 
   getRange() {
     let options = this.realPoints;
+    let {minX, minY, maxX, maxY} = Common.geRange(options);
 
-    options.forEach(point => {
-      if(point[0] > this.offset.maxX){
-        this.offset.maxX = point[0];
-      }
-      if(!this.offset.minX && this.offset.minX !== 0){
-        this.offset.minX = point[0];
-      }
-      if(this.offset.minX && point[0] < this.offset.minX){
-        this.offset.minX = point[0];
-      }
-
-      if(point[1] > this.offset.maxY){
-        this.offset.maxY = point[1];
-      }
-
-      if(!this.offset.minY && this.offset.minY !== 0){
-        this.offset.minY = point[1];
-      }
-
-      if(this.offset.minY && point[1] < this.offset.minY){
-        this.offset.minY = point[1];
-      }
-    })
+    this.offset.minX = minX;
+    this.offset.minY = minY;
+    this.offset.maxX = maxX;
+    this.offset.maxY = maxY;
   }
 
   //记录开始坐标
@@ -135,7 +117,6 @@ class Rect {
   move(location){
     this.options.x = location.x + this.translate.x;
     this.options.y = location.y + this.translate.y;
-    // console.log(location.x + this.translate.x, location.y + this.translate.y);
   }
 }
 
