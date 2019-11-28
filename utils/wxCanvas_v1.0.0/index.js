@@ -122,6 +122,8 @@ class Shape {
 
     _t.shape = _t.init();
 
+    _t.isTouch = false; //是否被选中
+
   }
 
   //全局唯一标识符，用于标识每一个几何实例
@@ -192,12 +194,41 @@ class Shape {
   getShapeType() {
     return this.type;
   }
-  
-  //检测点是否在几何内
-  detect(location){
+
+  //检测点是否在几何内,返回true表示在几何内，否则为几何外
+  detect(location) {
+    // if(touchType === "touchEnd"){
+    //   this.isTouch = false;
+    //   console.log(touchType, this.isTouch);
+    //   return
+    // }
+
     let flag = Common._detect(this.shape, location);
-    console.log(flag);
-    // this.shape._detect(this.shape, location);
+
+    // if(flag && touchType === "touchStart"){
+    //   this.isTouch = true;
+    //   this.shape.getStartCoordinates(location);
+    // }
+    // console.log(touchType, this.isTouch);
+
+    return flag;
+  }
+
+  start(location) {
+    this.isTouch = true;
+    this.shape.getStartCoordinates(location);
+  }
+
+  move(location) {
+    let flag = Common._detect(this.shape, location)
+
+    if (this.isTouch && flag) {
+      this.shape.move(location);
+    }
+  }
+
+  end() {
+    this.isTouch = false;
   }
 }
 
@@ -219,6 +250,11 @@ class WxCanvas {
     _t.store = new Store(); //初始化仓库，用于存储当前Canvas实例所添加的Shape
 
     _t.checkStatus();
+
+    _t.touchShapes = []; //存储当前被选中的几何
+
+    //启动该配置将每次被点击的图层几何不能置于最高级别,默认为false
+    _t.preserveObjectStacking = options.preserveObjectStacking || false;
   }
 
   //检查状态
@@ -234,7 +270,7 @@ class WxCanvas {
   add(shape) {
     this.store.add(shape);
 
-    shape.setZIndex(this.store.length); //设置图层层级
+    shape.setZIndex(this.store.length); //设置初始图层层级
   }
 
   //更新Canvas状态
@@ -271,21 +307,102 @@ class WxCanvas {
   }
 
   //触摸事件开始
-  touchStart(e){
+  start(e) {
+    let _t = this;
     let location = {x: e.touches[0].x, y: e.touches[0].y}; //指尖触摸坐标
     let {store, length} = this.store;
-    
+    let activeObjs = {}, selectObj = null;
+
     //检查是在某个图形几何有效区域内
-    if(length > 0){
-      for(let key in store){
-        if(store.hasOwnProperty(key)){
-          store[key].detect(location);
+    if (length > 0) {
+      for (let key in store) {
+        if (store.hasOwnProperty(key)) {
+          activeObjs[key] = store[key];
+          let flag = store[key].detect(location);
+          if (flag) {
+            _t.touchShapes.push(store[key]);
+          }
+        }
+      }
+
+      //判断被选中的图形哪个优先级最高
+      if (this.touchShapes.length > 1) {
+        let shape = this.getMostHighShape(this.touchShapes);
+        shape.start(location);
+      } else if (this.touchShapes.length === 1) {
+        selectObj = this.touchShapes[0];
+
+        // if(activeObjs[selectObj.guid]){
+        //   delete this.store[selectObj.guid];
+        //   delete activeObjs[selectObj.guid];
+        // }
+        //
+        // selectObj.guid = selectObj.getGuid();
+        //
+        // activeObjs[selectObj.guid] = selectObj;
+        //
+        // this.store = activeObjs;
+        //
+        // // let count = 0;
+        // // for(let key in this.store){
+        // //   store[key].zIndex = ++count;
+        // // }
+        //
+        // this.update();
+        selectObj.start(location);
+      }
+    }
+  }
+
+  //触摸事件移动
+  move(e) {
+    let location = {x: e.touches[0].x, y: e.touches[0].y}; //指尖触摸坐标
+    let {store, length} = this.store;
+
+    //检查是在某个图形几何有效区域内
+    if (length > 0) {
+      for (let key in store) {
+        if (store.hasOwnProperty(key)) {
+          store[key].move(location);
         }
       }
     }
 
+    this.update();
   }
 
+  //触摸事件结束
+  end(e) {
+    let {store, length} = this.store;
+
+    if (length > 0) {
+      for (let key in store) {
+        if (store.hasOwnProperty(key)) {
+          store[key].end();
+        }
+      }
+    }
+
+    this.touchShapes = [];
+  }
+
+  //触摸事件注销
+  cancel() {
+
+  }
+
+  //获取最高优先级的几何实例
+  getMostHighShape(shapes) {
+    let highZIndexShape = shapes[0];
+
+    for (let i = 1, len = shapes.length; i < len; i++) {
+      if (highZIndexShape.zIndex < shapes[i].zIndex) {
+        highZIndexShape = shapes[i];
+      }
+    }
+
+    return highZIndexShape;
+  }
 }
 
 module.exports = {

@@ -26,6 +26,15 @@ class Circle {
     _t.realPoints = []; //真实点
 
     _t.pointsNumber = 100;
+
+    _t.translate = {x: 0, y: 0}; //位移坐标
+
+    _t.offset = {
+      minX: null,
+      minY: null,
+      maxX: null,
+      maxY: null
+    }
   }
 
 

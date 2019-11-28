@@ -60,6 +60,18 @@ Page({
       // apiMode: true
     });
 
+    var rect1 = new Shape("rect", {
+      x: 200,
+      y: 10,
+      w: 50,
+      h: 50,
+      fillMode: "fill",
+      fillColor: "#ffBBA6",
+      strokeColor: "#36BBA6",
+      // apiMode: true
+    });
+
+
     var circle = new Shape("circle", {
       x: 150,
       y: 250,
@@ -116,7 +128,7 @@ Page({
     // this.wxCanvas.add(img);
 
     this.wxCanvas.add(rect);
-    
+    this.wxCanvas.add(rect1);
 
     // this.wxCanvas.removeShape(img);
 
@@ -126,15 +138,17 @@ Page({
   },
   
   bindtouchstart: function(e){
-    this.wxCanvas.touchStart(e);
+    this.wxCanvas.start(e);
     // console.log("start: ", e);
   },
 
   bindtouchmove: function(e){
+    this.wxCanvas.move(e);
     // console.log("move: ", e);
   },
 
   bindtouchend: function(e){
+    this.wxCanvas.end(e);
     // console.log("end: ", e);
   },
 

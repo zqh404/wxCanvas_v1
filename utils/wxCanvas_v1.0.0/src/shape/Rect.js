@@ -24,6 +24,8 @@ class Rect {
       maxY: null
     }
 
+    _t.translate = {x: 0, y: 0}; //位移坐标
+
     _t.guid = guid; //全局唯一标识号
 
     _t.realPoints = []; //四个点的真实坐标
@@ -32,10 +34,11 @@ class Rect {
   }
 
   _draw(context) {
-    if(!this.options.apiMode){
-      this.realPoints = this.getRealPoints();
-    }
-
+    // if(!this.options.apiMode){
+    //   this.realPoints = this.getRealPoints();
+    // }
+    this.realPoints = this.getRealPoints();
+    this.getRange();
     this.createPath(context, this.realPoints);
   }
 
@@ -91,19 +94,48 @@ class Rect {
 
     context.restore();
     // context.draw();
-  },
+  }
 
   getRange() {
     let options = this.realPoints;
 
     options.forEach(point => {
-      if(point[0].x > this.offset.maxX){
-        this.offset.maxX = point[0].x;
+      if(point[0] > this.offset.maxX){
+        this.offset.maxX = point[0];
       }
       if(!this.offset.minX && this.offset.minX !== 0){
-        this.offset.minX = point[0].x;
+        this.offset.minX = point[0];
+      }
+      if(this.offset.minX && point[0] < this.offset.minX){
+        this.offset.minX = point[0];
+      }
+
+      if(point[1] > this.offset.maxY){
+        this.offset.maxY = point[1];
+      }
+
+      if(!this.offset.minY && this.offset.minY !== 0){
+        this.offset.minY = point[1];
+      }
+
+      if(this.offset.minY && point[1] < this.offset.minY){
+        this.offset.minY = point[1];
       }
     })
+  }
+
+  //记录开始坐标
+  getStartCoordinates(location){
+    let {x, y} = this.options;
+    this.translate.x = x - location.x;
+    this.translate.y = y - location.y;
+  }
+
+  //移动
+  move(location){
+    this.options.x = location.x + this.translate.x;
+    this.options.y = location.y + this.translate.y;
+    // console.log(location.x + this.translate.x, location.y + this.translate.y);
   }
 }
 

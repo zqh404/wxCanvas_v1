@@ -59,13 +59,17 @@ module.exports = {
    * https://www.cnblogs.com/anningwang/p/7581545.html
    * https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
    */
-  pnpoly(slides, points, location) {
-    let i, j, flag = 0;
+  pnpoly(slides, points, offset, location) {
+    let i, j, flag = false;
     let {x, y} = location;
 
+    if(offset.minX > x || offset.maxX < x || offset.minY > y || offset.maxY < y){
+      return flag = false
+    }
+
     for (i = 0, j = slides - 1; i < slides; j = i++) {
-      if (((points[i].y > y) != (points[j].y > y)) &&
-        (x < (points[j].x - points[i].x) * (y - points[i].y) / (points[j].y - points[i].y) + points[i].x)) {
+      if (((points[i][1] > y) != (points[j][1] > y)) &&
+        (x < (points[j][0] - points[i][0]) * (y - points[i][1]) / (points[j][1] - points[i][1]) + points[i][0])) {
         flag = !flag;
       }
     }
@@ -75,8 +79,8 @@ module.exports = {
 
   //边缘检测
   _detect(shape, location) {
-    let {realPoints} = shape;
-    let flag = this.pnpoly(realPoints.length, realPoints, location);
+    let {realPoints, offset} = shape;
+    let flag = this.pnpoly(realPoints.length, realPoints, offset, location);
     return flag;
   }
 }
