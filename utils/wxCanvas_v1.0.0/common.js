@@ -112,5 +112,39 @@ module.exports = {
     })
 
     return offset;
+  },
+
+  //计算两点间距离
+  getDistance(point) {
+    return Math.sqrt(point.x * point.x + point.y * point.y);
+  },
+
+  //获取角度,向量求值法
+  getAngele(p1, p2) {
+    let l1 = this.getDistance(p1);
+    let l2 = this.getDistance(p2);
+
+    let mr = l1 * l2;
+    if (mr === 0) {
+      return 0
+    }
+
+    let r = (p1.x * p2.x + p1.y * p2.y) / mr;
+    if (r > 1) {
+      r = 1;
+    }
+
+    let angle = Math.acos(r);
+
+    if(this.cross(p1, p2) > 0){
+      angle *= -1;
+    }
+
+    return angle * 180 / Math.PI;
+
+  },
+
+  cross(p1, p2){
+    return p1.x * p2.y - p2.x * p1.y;
   }
 }

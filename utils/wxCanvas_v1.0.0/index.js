@@ -144,6 +144,7 @@ class Shape {
 
     _t.isTouch = false; //是否被选中
 
+    _t.isDoubleTouch = false; //双指触摸标志
   }
 
   //全局唯一标识符，用于标识每一个几何实例
@@ -222,21 +223,45 @@ class Shape {
     return flag;
   }
 
-  start(location) {
-    this.isTouch = true;
-    this.shape.getStartCoordinates(location);
+  //检测两点是否在几何有效区间内
+  detectDouble(locations) {
+    let firstFlag = this.detect(locations[0]);
+    let secondFlag = this.detect(locations[1]);
+
+    return firstFlag && secondFlag;
   }
 
-  move(location) {
-    let flag = Common._detect(this.shape, location)
-
-    if (this.isTouch && flag) {
-      this.shape.move(location);
+  start(location, type) {
+    if(type === "onePressTap"){
+      this.isTouch = true;
+      this.shape.getStartCoordinates(location);
+    }else if(type === "doublePressTap"){
+      this.isDoubleTouch = true;
+      this.shape.getStartPinchCoordinates(location);
+      console.log('touch double');
     }
+  }
+
+  move(location, type) {
+    if(type === "onePressTap"){
+      let flag = Common._detect(this.shape, location)
+
+      if (this.isTouch && flag) {
+        this.shape.move(location);
+      }
+    }else if(type === "doublePressTap"){
+      let doubleFlag = this.detectDouble(location);
+
+      if(this.isDoubleTouch && doubleFlag){
+        this.shape.pinchMove(location);
+      }
+    }
+
   }
 
   end() {
     this.isTouch = false;
+    this.isDoubleTouch = false;
   }
 }
 
@@ -318,16 +343,34 @@ class WxCanvas {
 
   //触摸事件开始
   start(e) {
+    if (!e.touches) {
+      return;
+    }
     let _t = this;
-    let location = {x: e.touches[0].x, y: e.touches[0].y}; //指尖触摸坐标
+    let len = e.touches.length; //点的数量，仅支持单点移动、双点旋转和缩放
     let {store} = this.store;
-    let touchRender = [], activeGroupObj = [], activeObjs = [], selectObj = null;
+
+    _t.touchShapes = [];  //清空缓存
+
+    let location = len === 1 ? {x: e.touches[0].x, y: e.touches[0].y} : len === 2 ? [
+      {x: e.touches[0].x, y: e.touches[0].y},
+      {x: e.touches[1].x, y: e.touches[1].y}
+    ] : null; //指尖触摸坐标
+
+    let type = len === 1 ? "onePressTap" : "doublePressTap";
+
+    if (location === null) {
+      return
+    }
+
+    let activeObjs = [], selectObj = null;
 
     //检查是在某个图形几何有效区域内
     if (store.length > 0) {
-      for (let i = 0, len = store.length; i < len; i++) {
+      for (let i = 0, length = store.length; i < length; i++) {
         let item = store[i];
-        let flag = item.detect(location);
+        let flag = len === 1 ? item.detect(location) : item.detectDouble(location);
+
         activeObjs.push(item);
 
         if (flag) {
@@ -336,40 +379,56 @@ class WxCanvas {
       }
 
       //判断被选中的图形哪个优先级最高
-      if (this.touchShapes.length > 1) {
-        let shape = this.getMostHighShape(this.touchShapes);
-        shape.start(location);
-      } else if (this.touchShapes.length === 1) {
-        selectObj = this.touchShapes[0];
+      if (_t.touchShapes.length > 1) {
+        let shape = _t.getMostHighShape(_t.touchShapes);
+        shape.start(location, type);
+      } else if (_t.touchShapes.length === 1) {
+        selectObj = _t.touchShapes[0];
 
-        if (this.preserveObjectStacking) {
-          selectObj.start(location);
+        if (_t.preserveObjectStacking) {
+          selectObj.start(location, type);
           return;
         }
 
-        let idx = this.store.getIndex(selectObj);
+        let idx = _t.store.getIndex(selectObj);
 
         store.splice(idx, 1);
 
         store.push(selectObj);
 
-        this.update();
+        _t.update();
 
-        selectObj.start(location);
+        selectObj.start(location, type);
       }
+
     }
   }
 
   //触摸事件移动
   move(e) {
-    let location = {x: e.touches[0].x, y: e.touches[0].y}; //指尖触摸坐标
+    if(!e.touches){
+      return;
+    }
+
+    let len = e.touches.length;
+    let type = len === 1 ? "onePressTap" : "doublePressTap";
+
+    let location = len === 1 ? {x: e.touches[0].x, y: e.touches[0].y} : len ===2 ? [
+      {x: e.touches[0].x, y: e.touches[0].y},
+      {x: e.touches[1].x, y: e.touches[1].y}
+    ] : null; //指尖触摸坐标
+
+    if(location === null){
+      return;
+    }
+
     let {store} = this.store;
 
     //检查是在某个图形几何有效区域内
     if (store.length > 0) {
       for (let key in store) {
         if (store.hasOwnProperty(key)) {
-          store[key].move(location);
+          store[key].move(location, type);
         }
       }
     }

@@ -52,8 +52,8 @@ Page({
     var rect = new Shape("rect", { 
       x: 150, 
       y: 250, 
-      w: 80, 
-      h: 80, 
+      w: 100, 
+      h: 100, 
       fillMode: "fill",
       fillColor: "#36BBA6",
       strokeColor: "#36BBA6",
@@ -123,14 +123,14 @@ Page({
 
     var img = new Shape("img", { x: 100, y: 100, w: 100, h: 100, file: "./logo.png"});
 
-    this.wxCanvas.add(polygon);
+    // this.wxCanvas.add(polygon);
   
-    this.wxCanvas.add(img);
-    this.wxCanvas.add(polygon);
+    // this.wxCanvas.add(img);
+    // this.wxCanvas.add(polygon);
 
     this.wxCanvas.add(rect);
-    this.wxCanvas.add(text);
-    this.wxCanvas.add(ellipse);
+    // this.wxCanvas.add(text);
+    // this.wxCanvas.add(ellipse);
     // this.wxCanvas.removeShape(img);
 
     this.wxCanvas.update();
