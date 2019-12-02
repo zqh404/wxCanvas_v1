@@ -45,10 +45,12 @@ module.exports = {
       fillMode: 'fill',
       fillColor: "",
       strokeColor: "",
-      lineWidth: 0.5,
+      selectedColor: '#5CACEE',
+      lineWidth: 2,
       opacity: 1,
       isDrag: true,
-      apiMode: false
+      apiMode: false,
+      isSelected: false
     }
   },
 

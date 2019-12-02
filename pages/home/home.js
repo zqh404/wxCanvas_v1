@@ -56,15 +56,14 @@ Page({
       h: 100, 
       fillMode: "fill",
       fillColor: "#36BBA6",
-      strokeColor: "#36BBA6",
       // apiMode: true
     });
 
     var rect1 = new Shape("rect", {
-      x: 200,
-      y: 10,
-      w: 50,
-      h: 50,
+      x: 170,
+      y: 260,
+      w: 100,
+      h: 100,
       fillMode: "fill",
       fillColor: "#ffBBA6",
       strokeColor: "#36BBA6",
@@ -127,7 +126,7 @@ Page({
   
     // this.wxCanvas.add(img);
     // this.wxCanvas.add(polygon);
-
+    // this.wxCanvas.add(rect1);
     this.wxCanvas.add(rect);
     // this.wxCanvas.add(text);
     // this.wxCanvas.add(ellipse);
@@ -139,17 +138,17 @@ Page({
   },
   
   bindtouchstart: function(e){
-    this.wxCanvas.start(e);
+    this.wxCanvas.start_1(e);
     // console.log("start: ", e);
   },
 
   bindtouchmove: function(e){
-    this.wxCanvas.move(e);
+    this.wxCanvas.move_1(e);
     // console.log("move: ", e);
   },
 
   bindtouchend: function(e){
-    this.wxCanvas.end(e);
+    this.wxCanvas.end_1(e);
     // console.log("end: ", e);
   },
 

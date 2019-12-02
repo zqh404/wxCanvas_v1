@@ -33,10 +33,15 @@ class Rect {
     _t.defaultColor = "black";
 
     _t.zoom = 1; //缩放前后记录
-
+  
     _t.pinch = {pre: {x: 0, y: 0}, last: {x: 0, y: 0}}; //缩放前后长度记录
 
     _t.angle = 0;
+
+    _t.pinchStartLen = null;
+
+    _t.lastZoom = 1;
+    _t.tempZoom = 1;
   }
 
   _draw(context) {
@@ -68,23 +73,32 @@ class Rect {
   createPath(context, points) {
     context.save();
     context.beginPath();
-
+    
+    let { x, y, w, h } = this.options;
     //小程序api绘制模式
-    if (this.options.apiMode) {
-      let {x, y, w, h} = this.options;
-      context.rect(x - w / 2, y - h / 2, w, h);
-      // context.scale(this.zoom, this.zoom);
-    } else { //手动绘制模式
-      context.moveTo(points[0][0], points[0][1]);
+    // 
+    // if (this.options.apiMode) {
+      
+    //   context.rect(x - w / 2, y - h / 2, w, h);
+    //   // context.scale(this.zoom, this.zoom);
+    // } else { //手动绘制模式
+    //   context.moveTo(points[0][0], points[0][1]);
 
-      for (let i = 0, len = points.length; i < len; i++) {
-        context.lineTo(points[i][0], points[i][1]);
-      }
+    //   for (let i = 0, len = points.length; i < len; i++) {
+    //     context.lineTo(points[i][0], points[i][1]);
+    //   }
+    // }
 
-      context.rotate(this.angle);
-    }
+    // context.rect(x, y, w, h);
+    //旋转
+    context.translate(x, y);
+    context.rotate(this.angle);
+    context.translate(-x, -y);
+    context.rect(x - w / 2, y - h / 2, w, h);
 
-    context.closePath();
+    //缩放
+    context.translate(x * (1 - this.tempZoom), y * (1 - this.tempZoom));
+    context.scale(this.tempZoom, this.tempZoom);
 
     //填充色
     if (this.options.fillMode === "fill") {
@@ -92,17 +106,22 @@ class Rect {
       context.fill();
     }
 
-    //边框色
-    context.setStrokeStyle(this.options.strokeColor || this.defaultColor);
-    context.stroke();
-
-    //设置边框宽度
+  
+      //设置边框宽度
     context.setLineWidth(this.options.lineWidth);
 
+      //边框色
+    context.setStrokeStyle(this.options.isSelected ? this.options.selectedColor : this.options.fillColor || this.defaultColor);
+      context.stroke();
+   
+    
+  
     //设置不透明度
     context.setGlobalAlpha(this.options.opacity);
 
     context.restore();
+   
+
     // context.draw();
   }
 
@@ -134,6 +153,8 @@ class Rect {
 
     this.pinch.pre.x = p2.x - p1.x;
     this.pinch.pre.y = p2.y - p1.y;
+
+    this.pinchStartLen = Common.getDistance(this.pinch.pre);
   }
 
   pinchMove(location) {
@@ -141,15 +162,34 @@ class Rect {
     this.pinch.last.x = p2.x - p1.x;
     this.pinch.last.y = p2.y - p1.y;
 
-    let pinchLen = Common.getDistance(this.pinch.last) - Common.getDistance(this.pinch.pre);
-    this.options.w += pinchLen * 0.05;
-    this.options.h += pinchLen * 0.05;
+    // let pinchLen = Common.getDistance(this.pinch.last) - Common.getDistance(this.pinch.pre);
+    // this.options.w += pinchLen * 0.05;
+    // this.options.h += pinchLen * 0.05;
+    
+    if (this.pinchStartLen > 0){
+      let zoom = Common.getDistance(this.pinch.last) / this.pinchStartLen;
+      this.tempZoom = zoom * this.lastZoom;
+    }
 
-    this.angle = Common.getAngele(p1, p2);
-    // this.zoom = Common.getDistance(this.pinch.last) / Common.getDistance(this.pinch.pre);
+    this.angle = -Common.getAngele(this.pinch.last, this.pinch.pre);
+
+    this.pinch.pre.x = this.pinch.last.x;
+    this.pinch.pre.y = this.pinch.last.y;
+    console.log(this.angle);
+
   }
 
+  setSelectStatus(flag){
+    this.options.isSelected = flag;
+  }
 
+  end(){
+    this.pinch.pre.x = this.pinch.pre.y = 0;
+    this.lastZoom = this.tempZoom;
+    // this.pinch.pre.x = this.pinch.last.x;
+    // this.pinch.pre.y = this.pinch.last.y;
+    this.pinchStartLen = null;
+  }
 }
 
 export default Rect;

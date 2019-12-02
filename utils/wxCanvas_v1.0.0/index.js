@@ -234,25 +234,36 @@ class Shape {
   start(location, type) {
     if(type === "onePressTap"){
       this.isTouch = true;
+      this.isDoubleTouch = false;
       this.shape.getStartCoordinates(location);
     }else if(type === "doublePressTap"){
+      this.isTouch = false;
       this.isDoubleTouch = true;
       this.shape.getStartPinchCoordinates(location);
-      console.log('touch double');
+      // console.log('touch double');
     }
   }
 
   move(location, type) {
     if(type === "onePressTap"){
-      let flag = Common._detect(this.shape, location)
+      // let flag = Common._detect(this.shape, location)
 
-      if (this.isTouch && flag) {
+      // if (this.isTouch && flag) {
+      //   this.shape.move(location);
+      // }
+
+      if(this.isTouch){
         this.shape.move(location);
       }
+      
     }else if(type === "doublePressTap"){
-      let doubleFlag = this.detectDouble(location);
+      // let doubleFlag = this.detectDouble(location);
 
-      if(this.isDoubleTouch && doubleFlag){
+      // if(this.isDoubleTouch && doubleFlag){
+      //   this.shape.pinchMove(location);
+      // }
+
+      if (this.isDoubleTouch) {
         this.shape.pinchMove(location);
       }
     }
@@ -262,6 +273,11 @@ class Shape {
   end() {
     this.isTouch = false;
     this.isDoubleTouch = false;
+    this.shape.end();
+  }
+
+  setSelected(flag){
+    this.shape.setSelectStatus(flag);
   }
 }
 
@@ -288,6 +304,8 @@ class WxCanvas {
 
     //启动该配置将每次被点击的图层几何不能置于最高级别,默认为false
     _t.preserveObjectStacking = options.preserveObjectStacking || false;
+
+    _t.currentShape = null; //当前被选中的图形
   }
 
   //检查状态
@@ -396,12 +414,14 @@ class WxCanvas {
 
         store.push(selectObj);
 
-        _t.update();
+       
 
         selectObj.start(location, type);
       }
 
     }
+
+    _t.update();
   }
 
   //触摸事件移动
@@ -449,6 +469,109 @@ class WxCanvas {
     this.touchShapes = [];
   }
 
+
+  start_1(e){ 
+    if(!e.touches){
+      return;
+    }
+
+    let { store } = this.store;//存储画布中图形的仓库
+    
+    //仓库空了
+    if (!store.length){
+      return;
+    }
+
+    let finger = e.touches.length;
+    let location = null;
+    let touchsedShapes = []; //临时存储被点击的图形
+
+    //单指点击，若在图形的有效范围内，判断为选中该图形
+    if(finger === 1){
+      
+      location = { x: e.touches[0].x, y: e.touches[0].y}; //记录单击的坐标
+
+      store.forEach(v=>{
+        let flag = v.detect(location);
+        
+        if(flag){
+          touchsedShapes.push(v);
+        }
+      });
+
+
+      if(!touchsedShapes.length){
+        if(!this.currentShape){
+          return 
+        }
+        
+        this.currentShape.start(location, 'onePressTap');
+        return;
+      }
+
+      let shape = null;
+
+      // v.setSelected(false);
+      if (touchsedShapes.length > 1){
+        shape = this.getMostHighShape(touchsedShapes); //获取优先级（图层）最高的图形
+
+      } else if (touchsedShapes.length === 1){
+        shape = touchsedShapes[0];
+      }
+
+      this.resetAllShapeStatus(); //重置设置所有图形选中状态
+      this.currentShape = shape; //记录被选中的图形
+
+      shape.setSelected(true);
+      shape.start(location, 'onePressTap');
+    }else if(finger === 2){  //双指点击进行更细的判断： 缩放、旋转
+      if (!this.currentShape) {
+        return
+      }
+
+      location = [{ x: e.touches[0].x, y: e.touches[0].y }, { x: e.touches[1].x, y: e.touches[1].y }];
+      
+      this.currentShape.start(location, 'doublePressTap');
+    }else{
+      return
+    }
+
+    this.update(); //更新画布
+
+  }
+
+  move_1(e){
+    if(!e.touches || !this.currentShape){
+      return;
+    }
+
+    let finger = e.touches.length;
+    let location = null;
+    //单指情况，进行移动
+    if(finger === 1){
+      location = { x: e.touches[0].x, y: e.touches[0].y};
+      this.currentShape.move(location, 'onePressTap');
+    }else if(finger === 2){ //双指情况，进行缩放、旋转
+      location = [{ x: e.touches[0].x, y: e.touches[0].y }, { x: e.touches[1].x, y: e.touches[1].y }]
+      this.currentShape.move(location, 'doublePressTap');
+    }else{
+      return 
+    }
+    
+    this.update();
+  }
+
+  end_1(e){
+    let { store } = this.store;
+
+    if (store.length > 0) {
+      store.forEach(v => {
+        v.end();
+      });
+    }
+
+  }
+
   //触摸事件注销
   cancel() {
 
@@ -466,6 +589,19 @@ class WxCanvas {
 
     return highZIndexShape;
   }
+
+  resetAllShapeStatus(){
+    let {store} = this.store;
+
+    if(!store.length){
+      return
+    }
+
+    store.forEach(v=>{
+      v.setSelected(false);
+    })
+  }
+  
 }
 
 module.exports = {
