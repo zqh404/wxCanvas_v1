@@ -1,10 +1,8 @@
-import Common from '../../common.js';
+import Common from '../common.js';
 
-class Text {
-  constructor(options, guid) {
+class Text{
+  constructor(opts){
     let _t = this;
-
-    _t.guid = guid;
 
     /**
      * 自定义文字
@@ -17,17 +15,22 @@ class Text {
      * textBaseline -
      * isShadow - 是否加阴影效果，默认为false
      */
-    _t.options = Common._extends({
-      x: 0,
-      y: 0,
-      text: "Hello World",
-      fillColor: "#0CA5B0",
+
+    _t.pos = {
+      tx: opts.pos.tx,
+      ty: opts.pos.ty,
+      scale: opts.pos.scale,
+      rotate: opts.pos.rotate
+    }
+
+    _t.params = Common.extends(Common.commonParams(), opts.params, {
       fontSize: 12,
-      rotate: 0,
       align: "center",
       textBaseline: "middle",
-      isShadow: false,
-    }, Common.commonParams(), options || {});
+      isShadow: false
+    });
+
+    _t.text = opts.text || "Hello World";
 
     //默认阴影参数
     _t.shadowConfig = {
@@ -35,13 +38,11 @@ class Text {
       offsetY: 5,
       blur: 5,
       color: "#000000"
-    }
+    };
 
     _t.realPoints = [];
 
     _t.defaultColor = "black";
-
-    _t.translate = {x: 0, y: 0}; //位移坐标
 
     _t.offset = {
       minX: null,
@@ -51,20 +52,36 @@ class Text {
     }
 
     _t.regxStr = /[\u4e00-\u9fa5]/; //中文编码范围
+
+    _t.isSelected = opts.isSelected || false;
+
+    _t.w = 0;
+
+    _t.h = this.params.fontSize;
   }
 
-  //检查参数类似是否合法
-  check() {
-    let {text} = this.options;
+  draw(context) {
+    this.realPoints = this.getRealPoints();
+    this.getRange();
+    this.createPath(context, this.realPoints);
+  }
 
-    if (typeof text !== "string") {
-      throw Error("error: text must be string type!");
+  update(opts) {
+    this.pos = {
+      tx: opts.pos.tx,
+      ty: opts.pos.ty,
+      scale: opts.pos.scale,
+      rotate: opts.pos.rotate,
     }
+    this.isSelected = opts.isSelected;
   }
 
   getRealPoints() {
-    let {x, y, text, fontSize} = this.options;
+    let { tx, ty, scale, rotate } = this.pos;
+    let text = this.text, fontSize = this.params.fontSize;
+
     let points = []; //存储文字四边的坐标
+
     let len = text.length; //文字长度
     let w = 0, h = fontSize;
 
@@ -78,24 +95,25 @@ class Text {
       }
     }
 
-    points.push([x - w / 2, y - h / 2]);
-    points.push([x - w / 2, y + h / 2]);
-    points.push([x + w / 2, y + h / 2]);
-    points.push([x + w / 2, y - h / 2]);
+    w *= scale;
+    h *= scale;
+
+    this.w = w;
+    this.h = h;
+
+    points.push([tx - w / 2, ty - h / 2]);
+    points.push([tx - w / 2, ty + h / 2]);
+    points.push([tx + w / 2, ty + h / 2]);
+    points.push([tx + w / 2, ty - h / 2]);
 
     return points;
   }
 
-  _draw(context) {
-    this.realPoints = this.getRealPoints();
-    this.getRange();
-    this.createPath(context);
-  }
-
   createPath(context) {
     context.save();
-
-    let {x, y, text, fontSize, isShadow, fillMode, align, fillColor, textBaseline} = this.options;
+    let {tx, ty, rotate, scale} = this.pos;
+    let text = this.text;
+    let { fontSize, isShadow, fillMode, align, fillColor, textBaseline} = this.params;
 
     //设置字体大小
     context.setFontSize(fontSize);
@@ -110,15 +128,28 @@ class Text {
     //设置文字竖直对齐方式
     context.setTextBaseline(textBaseline);
 
-    context.fillText(text, x, y);
+    //旋转
+    context.translate(tx, ty);
+    context.rotate(rotate);
+    context.translate(-tx, -ty);
+     
+    context.rect(tx - this.w / 2, ty - this.h / 2, this.w + 1, this.h + 1);
 
-    // if(isShadow){
-    //   let {offsetX, offsetY, blur, color} = this.shadowConfig;
-    //   context.setShadow(offsetX, offsetY, blur, color);
-    // }
+    //缩放
+    context.translate(tx * (1 - scale), ty * (1 - scale));
+    context.scale(scale, scale);
+
+    context.fillText(text, tx, ty);
+
+    //选中时的边框色
+    if(this.isSelected){
+      //设置变宽宽度
+      context.setLineWidth(this.params.lineWidth);
+      context.setStrokeStyle(this.isSelected ? this.params.selectedColor : this.params.fillColor || this.defaultColor);
+      context.stroke();
+    }
 
     context.restore();
-
   }
 
   baseline(type, value) {
@@ -140,7 +171,7 @@ class Text {
 
   getRange() {
     let options = this.realPoints;
-    let {minX, minY, maxX, maxY} = Common.geRange(options);
+    let { minX, minY, maxX, maxY } = Common.geRange(options);
 
     this.offset.minX = minX;
     this.offset.minY = minY;
@@ -148,17 +179,8 @@ class Text {
     this.offset.maxY = maxY;
   }
 
-  //记录开始坐标
-  getStartCoordinates(location){
-    let {x, y} = this.options;
-    this.translate.x = x - location.x;
-    this.translate.y = y - location.y;
-  }
-
-  //移动
-  move(location){
-    this.options.x = location.x + this.translate.x;
-    this.options.y = location.y + this.translate.y;
+  setSelected(flag) {
+    this.isSelected = flag;
   }
 }
 

@@ -15,8 +15,8 @@
 		"scopeDataCheck": false
 	},
 	"compileType": "miniprogram",
-	"libVersion": "2.9.3",
-	"appid": "wx2b8fa4561febf388",
+	"libVersion": "2.9.4",
+	"appid": "wxfe655cf02a67d801",
 	"projectname": "shirt",
 	"debugOptions": {
 		"hidedInDevtools": []

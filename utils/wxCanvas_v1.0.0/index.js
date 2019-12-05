@@ -5,8 +5,7 @@ const guid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'; // GUID格式
 
 class Store {
   constructor() {
-    this.store = {}; //使用对象存储，字典查询更快捷
-    this.length = 0;
+    this.store = [];
   }
 
   //添加几何实例
@@ -15,39 +14,60 @@ class Store {
       throw Error("error: Shape has not id!");
     }
 
-    this.store[shape.guid] = shape;
-
-    this.length++;
+    this.store.push(shape);
   }
 
   //删除某个几何
   delete(shape) {
-    if (this.store[shape.guid]) {
-      delete this.store[shape.guid];
+    if (!this.store.length) {
+      return;
+    }
+    let deleteIndex = null;
 
-      if (this.length > 0) {
-        this.length--;
+    for (let i = 0, len = this.store.length; i < len; i++) {
+      if (this.store[i].guid === shape.guid) {
+        deleteIndex = i;
+        break;
       }
+    }
+
+    if (deleteIndex !== null) {
+      this.store.splice(deleteIndex, 1);
     }
   }
 
   //清空仓库
   clear() {
-    this.store = {};
-    this.length = 0;
+    this.store = [];
   }
 
   //获取仓库存储的几何图形数量
   getLength() {
-    return this.length;
+    return this.store.length;
   }
 
   //根据全局guid查找几何,返回当前几何实例, 若找不到，返回默认empty字符串提示
   find(guid) {
-    if (guid && this.length > 0) {
-      return this.store[guid] || 'empty';
+    if (guid && this.store.length > 0) {
+      let aim = this.store.filter(v => {
+        return v.guid === guid
+      })
+      return aim.length ? aim[0] : 'empty';
+      // return this.store[guid] || 'empty';
     }
     return 'empty';
+  }
+
+  getIndex(shape) {
+    let idx = null;
+    for (let i = 0, len = this.store.length; i < len; i++) {
+      if (this.store[i].guid === shape.guid) {
+        idx = i;
+        break;
+      }
+    }
+
+    return idx;
   }
 }
 
@@ -122,6 +142,9 @@ class Shape {
 
     _t.shape = _t.init();
 
+    _t.isTouch = false; //是否被选中
+
+    _t.isDoubleTouch = false; //双指触摸标志
   }
 
   //全局唯一标识符，用于标识每一个几何实例
@@ -192,12 +215,72 @@ class Shape {
   getShapeType() {
     return this.type;
   }
-  
-  //检测点是否在几何内
-  detect(location){
+
+  //检测点是否在几何内,返回true表示在几何内，否则为几何外
+  detect(location) {
     let flag = Common._detect(this.shape, location);
-    console.log(flag);
-    // this.shape._detect(this.shape, location);
+
+    return flag;
+  }
+
+  //检测两点是否在几何有效区间内
+  detectDouble(locations) {
+    let firstFlag = this.detect(locations[0]);
+    let secondFlag = this.detect(locations[1]);
+
+    return firstFlag && secondFlag;
+  }
+
+  start(location, type) {
+    this.shape.start(location);
+    // if(type === "onePressTap"){
+    //   this.isTouch = true;
+    //   this.isDoubleTouch = false;
+    //   this.shape.getStartCoordinates(location);
+    // }else if(type === "doublePressTap"){
+    //   this.isTouch = false;
+    //   this.isDoubleTouch = true;
+    //   this.shape.getStartPinchCoordinates(location);
+    //   // console.log('touch double');
+    // }
+  }
+
+  move(e, type) {
+    this.shape.move(e);
+
+    // if(type === "onePressTap"){
+    //   // let flag = Common._detect(this.shape, location)
+
+    //   // if (this.isTouch && flag) {
+    //   //   this.shape.move(location);
+    //   // }
+
+    //   if(this.isTouch){
+    //     this.shape.move(e);
+    //   }
+      
+    // }else if(type === "doublePressTap"){
+    //   // let doubleFlag = this.detectDouble(location);
+
+    //   // if(this.isDoubleTouch && doubleFlag){
+    //   //   this.shape.pinchMove(location);
+    //   // }
+
+    //   if (this.isDoubleTouch) {
+    //     this.shape.pinchMove(e);
+    //   }
+    // }
+
+  }
+
+  end() {
+    // this.isTouch = false;
+    // this.isDoubleTouch = false;
+    this.shape.end();
+  }
+
+  setSelected(flag){
+    this.shape.setSelectStatus(flag);
   }
 }
 
@@ -219,6 +302,13 @@ class WxCanvas {
     _t.store = new Store(); //初始化仓库，用于存储当前Canvas实例所添加的Shape
 
     _t.checkStatus();
+
+    _t.touchShapes = []; //存储当前被选中的几何
+
+    //启动该配置将每次被点击的图层几何不能置于最高级别,默认为false
+    _t.preserveObjectStacking = options.preserveObjectStacking || false;
+
+    _t.currentShape = null; //当前被选中的图形
   }
 
   //检查状态
@@ -233,23 +323,25 @@ class WxCanvas {
   //添加几何模型、文字、或图片
   add(shape) {
     this.store.add(shape);
-
-    shape.setZIndex(this.store.length); //设置图层层级
   }
 
   //更新Canvas状态
   update() {
-    let {length, store} = this.store; //存储图层几何仓库
+    let {store} = this.store; //存储图层几何仓库
 
-    if (!length) {
+    if (!store.length) {
       return;
     }
 
-    for (let key in store) {
-      if (store.hasOwnProperty(key)) {
-        store[key]._draw(this.canvas);
-      }
-    }
+    //清除画布内容
+    let {x, y, w, h} = this.options;
+    this.canvas.clearRect(x, y, w, h);
+
+    //重新绘制
+    store.forEach((v, index) => {
+      v.setZIndex(index + 1); //设置初始图层层级
+      v._draw(this.canvas);
+    });
 
     this.canvas.draw();
   }
@@ -271,21 +363,254 @@ class WxCanvas {
   }
 
   //触摸事件开始
-  touchStart(e){
-    let location = {x: e.touches[0].x, y: e.touches[0].y}; //指尖触摸坐标
-    let {store, length} = this.store;
-    
+  start(e) {
+    if (!e.touches) {
+      return;
+    }
+    let _t = this;
+    let len = e.touches.length; //点的数量，仅支持单点移动、双点旋转和缩放
+    let {store} = this.store;
+
+    _t.touchShapes = [];  //清空缓存
+
+    let location = len === 1 ? {x: e.touches[0].x, y: e.touches[0].y} : len === 2 ? [
+      {x: e.touches[0].x, y: e.touches[0].y},
+      {x: e.touches[1].x, y: e.touches[1].y}
+    ] : null; //指尖触摸坐标
+
+    let type = len === 1 ? "onePressTap" : "doublePressTap";
+
+    if (location === null) {
+      return
+    }
+
+    let activeObjs = [], selectObj = null;
+
     //检查是在某个图形几何有效区域内
-    if(length > 0){
-      for(let key in store){
-        if(store.hasOwnProperty(key)){
-          store[key].detect(location);
+    if (store.length > 0) {
+      for (let i = 0, length = store.length; i < length; i++) {
+        let item = store[i];
+        let flag = len === 1 ? item.detect(location) : item.detectDouble(location);
+
+        activeObjs.push(item);
+
+        if (flag) {
+          _t.touchShapes.push(item);
+        }
+      }
+
+      //判断被选中的图形哪个优先级最高
+      if (_t.touchShapes.length > 1) {
+        let shape = _t.getMostHighShape(_t.touchShapes);
+        shape.start(location, type);
+      } else if (_t.touchShapes.length === 1) {
+        selectObj = _t.touchShapes[0];
+
+        if (_t.preserveObjectStacking) {
+          selectObj.start(location, type);
+          return;
+        }
+
+        let idx = _t.store.getIndex(selectObj);
+
+        store.splice(idx, 1);
+
+        store.push(selectObj);
+
+       
+
+        selectObj.start(location, type);
+      }
+
+    }
+
+    _t.update();
+  }
+
+  //触摸事件移动
+  move(e) {
+    if(!e.touches){
+      return;
+    }
+
+    let len = e.touches.length;
+    let type = len === 1 ? "onePressTap" : "doublePressTap";
+
+    let location = len === 1 ? {x: e.touches[0].x, y: e.touches[0].y} : len ===2 ? [
+      {x: e.touches[0].x, y: e.touches[0].y},
+      {x: e.touches[1].x, y: e.touches[1].y}
+    ] : null; //指尖触摸坐标
+
+    if(location === null){
+      return;
+    }
+
+    let {store} = this.store;
+
+    //检查是在某个图形几何有效区域内
+    if (store.length > 0) {
+      for (let key in store) {
+        if (store.hasOwnProperty(key)) {
+          store[key].move(e, type);
         }
       }
     }
 
+    this.update();
   }
 
+  //触摸事件结束
+  end(e) {
+    let {store} = this.store;
+
+    if (store.length > 0) {
+      store.forEach(v => {
+        v.end();
+      });
+    }
+
+    this.touchShapes = [];
+  }
+
+
+  start_1(e){ 
+    if(!e.touches){
+      return;
+    }
+
+    let { store } = this.store;//存储画布中图形的仓库
+    
+    //仓库空了
+    if (!store.length){
+      return;
+    }
+
+    let finger = e.touches.length;
+    let location = null;
+    let touchsedShapes = []; //临时存储被点击的图形
+
+    //单指点击，若在图形的有效范围内，判断为选中该图形
+    if(finger === 1){
+      
+      location = { x: e.touches[0].x, y: e.touches[0].y}; //记录单击的坐标
+
+      store.forEach(v=>{
+        let flag = v.detect(location);
+        
+        if(flag){
+          touchsedShapes.push(v);
+        }
+      });
+
+
+      if(!touchsedShapes.length){
+        if(!this.currentShape){
+          return 
+        }
+        
+        // this.currentShape.start(e, 'onePressTap');
+        this.currentShape.start(e);
+        return;
+      }
+
+      let shape = null;
+
+      // v.setSelected(false);
+      if (touchsedShapes.length > 1){
+        shape = this.getMostHighShape(touchsedShapes); //获取优先级（图层）最高的图形
+
+      } else if (touchsedShapes.length === 1){
+        shape = touchsedShapes[0];
+      }
+
+      this.resetAllShapeStatus(); //重置设置所有图形选中状态
+      this.currentShape = shape; //记录被选中的图形
+
+      this.currentShape.setSelected(true);
+      // shape.start(e, 'onePressTap');
+      this.currentShape.start(e);
+    }
+
+    
+
+    // else if(finger === 2){  //双指点击进行更细的判断： 缩放、旋转
+    //   if (!this.currentShape) {
+    //     return
+    //   }
+
+    //   location = [{ x: e.touches[0].x, y: e.touches[0].y }, { x: e.touches[1].x, y: e.touches[1].y }];
+      
+    //   this.currentShape.start(e, 'doublePressTap');
+    // }else{
+    //   return
+    // }
+
+    this.update(); //更新画布
+
+  }
+
+  move_1(e){
+    if(!e.touches || !this.currentShape){
+      return;
+    }
+
+    let finger = e.touches.length;
+    let location = null;
+    //单指情况，进行移动
+    if(finger === 1){
+      location = { x: e.touches[0].x, y: e.touches[0].y};
+      this.currentShape.move(e, 'onePressTap');
+    }else if(finger === 2){ //双指情况，进行缩放、旋转
+      location = [{ x: e.touches[0].x, y: e.touches[0].y }, { x: e.touches[1].x, y: e.touches[1].y }]
+      this.currentShape.move(e, 'doublePressTap');
+    }else{
+      return 
+    }
+    
+    this.update();
+  }
+
+  end_1(e){
+    let { store } = this.store;
+
+    if (store.length > 0) {
+      store.forEach(v => {
+        v.end();
+      });
+    }
+
+  }
+
+  //触摸事件注销
+  cancel() {
+
+  }
+
+  //获取最高优先级的几何实例
+  getMostHighShape(shapes) {
+    let highZIndexShape = shapes[0];
+
+    for (let i = 1, len = shapes.length; i < len; i++) {
+      if (highZIndexShape.zIndex < shapes[i].zIndex) {
+        highZIndexShape = shapes[i];
+      }
+    }
+
+    return highZIndexShape;
+  }
+
+  resetAllShapeStatus(){
+    let {store} = this.store;
+
+    if(!store.length){
+      return
+    }
+
+    store.forEach(v=>{
+      v.setSelected(false);
+    })
+  }
+  
 }
 
 module.exports = {

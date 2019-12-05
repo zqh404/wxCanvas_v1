@@ -14,6 +14,17 @@ class CShape{
     _t.realPoints = [];
 
     _t.defaultColor = "black";
+
+    _t.translate = {x: 0, y: 0}; //位移坐标
+
+    _t.offset = {
+      minX: null,
+      minY: null,
+      maxX: null,
+      maxY: null
+    }
+
+    _t.heartCenterPoint = this.getHeartCenterPoint(_t.options.points); //获取几何重心
   }
 
   getRealPoints(){
@@ -23,9 +34,9 @@ class CShape{
   }
 
   _draw(context){
-    let points = this.getRealPoints();
-
-    this.createPath(context, points);
+    this.realPoints = this.getRealPoints();
+    this.getRange();
+    this.createPath(context, this.realPoints);
   }
 
   createPath(context, points){
@@ -57,7 +68,48 @@ class CShape{
     context.setGlobalAlpha(this.options.opacity);
 
     context.restore();
-    // context.draw();
+
+  }
+
+  getRange(){
+    let options = this.realPoints;
+    let {minX, minY, maxX, maxY} = Common.geRange(options);
+
+    this.offset.minX = minX;
+    this.offset.minY = minY;
+    this.offset.maxX = maxX;
+    this.offset.maxY = maxY;
+  }
+
+  //记录开始坐标
+  getStartCoordinates(location){
+    let {pointCenterX,pointCenterY } = this.heartCenterPoint;
+    this.translate.x = pointCenterX - location.x;
+    this.translate.y = pointCenterY - location.y;
+  }
+
+  //移动
+  move(location){
+    this.options.points.map(v=>{
+      v[0] += location.x + this.translate.x;
+      v[1] += location.y + this.translate.y;
+    })
+  }
+
+  //获取几何重心
+  getHeartCenterPoint(points){
+    let pointCenterX = 0, pointCenterY = 0;
+    let length = points.length;
+
+    Array.prototype.forEach.call(points, item => {
+      pointCenterX += item[0];
+      pointCenterY += item[1];
+    });
+
+    return {
+      pointCenterX: pointCenterX / length,
+      pointCenterY: pointCenterY / length
+    }
   }
 }
 
