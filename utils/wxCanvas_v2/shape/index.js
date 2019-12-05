@@ -23,6 +23,8 @@ class Shape {
 
     _t.sides = opts.sides || 3;
 
+    _t.imageUrl = opts.imageUrl || '';
+
     _t.pos = {
       tx: opts.pos.tx || 0,
       ty: opts.pos.ty || 0,
@@ -39,6 +41,7 @@ class Shape {
     let {guid, shape, gesture} = _t.init({
       width: _t.width,
       height: _t.height,
+      imageUrl: _t.imageUrl,
       r: _t.r,
       sides: _t.sides,
       pos: _t.pos,
