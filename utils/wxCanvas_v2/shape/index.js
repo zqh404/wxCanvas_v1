@@ -25,6 +25,8 @@ class Shape {
 
     _t.imageUrl = opts.imageUrl || '';
 
+    _t.text = opts.text;
+
     _t.pos = {
       tx: opts.pos.tx || 0,
       ty: opts.pos.ty || 0,

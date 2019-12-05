@@ -75,34 +75,40 @@ class Image {
     let {tx, ty, scale, rotate} = this.pos;
 
     //旋转
-    context.translate(points[0][0] + w / 2, points[0][1] + h / 2);
+    context.translate(tx,ty);
 
     context.rotate(rotate);
+    context.translate(-tx, -ty);
 
-    context.translate(-(points[0][0] + w / 2, -(points[0][1] + h / 2)));
+    context.rect(tx - w / 2, ty - h / 2, w + 1, h + 1);
 
     //缩放
-    context.translate(points[0][0] * (1 - scale), points[0][1] * (1 - scale));
+    context.translate(tx * (1 - scale), ty * (1 - scale));
     context.scale(scale, scale);
-    context.drawImage(this.imageUrl, points[0][0], points[0][1], w, h);
 
+    context.drawImage(this.imageUrl, tx - w / 2, ty - h /2, w, h);
+    
     context.closePath();
 
-    //填充色
-    if (this.params.fillMode === 'fill') {
-      context.setFillStyle(this.params.fillColor || this.defaultColor);
-      context.fill();
-    }
+    // //填充色
+    // if (this.params.fillMode === 'fill') {
+    //   context.setFillStyle(this.params.fillColor || this.defaultColor);
+    //   context.fill();
+    // }
 
-    //设置变宽宽度
-    context.setLineWidth(this.params.lineWidth);
+   
 
     //边框色
-    context.setStrokeStyle(this.isSelected ? this.params.selectedColor : this.params.fillColor || this.defaultColor);
-    context.stroke();
+    if(this.isSelected){
+      //设置变宽宽度
+      context.setLineWidth(this.params.lineWidth);
+      context.setStrokeStyle(this.isSelected ? this.params.selectedColor : this.params.fillColor || this.defaultColor);
+      context.stroke();
+    }
+    
 
     //设置不透明度
-    context.setGlobalAlpha(this.params.opacity);
+    // context.setGlobalAlpha(this.params.opacity);
 
     context.restore();
   }

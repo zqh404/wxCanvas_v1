@@ -151,9 +151,34 @@ Page({
       width: 100,
       height: 100,
       imageUrl: "./logo.png",
-      pos: { tx: 100, ty: 100 }
+      pos: { tx: 250, ty: 300 }
     });
+
+    var ear = new Shape("Image", {
+      width: 100,
+      height: 40,
+      imageUrl: "./ear.png",
+      pos: { tx: 200, ty: 300 }
+    });
+
+    var neck = new Shape("Image", {
+      width: 100,
+      height: 100,
+      imageUrl: "./neck.png",
+      pos: { tx: 100, ty: 250 }
+    });
+
+    var text = new Shape("Text", {
+      text: "hello world",
+      pos:{
+        tx: 50, ty: 50
+      }
+    });
+
+    this.wxCanvas.add(text);
     this.wxCanvas.add(img);
+    this.wxCanvas.add(ear);
+    this.wxCanvas.add(neck);
     this.wxCanvas.add(rect1);
     this.wxCanvas.add(rect);
     // this.wxCanvas.add(text);
