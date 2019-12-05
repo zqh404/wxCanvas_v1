@@ -1,120 +1,3 @@
-// class Gesture{
-//   constructor(){
-//     let _t = this;
-//     _t.touch = {};
-//     _t.movetouch = {};
-//     _t.params = { zoom: 1, lastZoom: 1, deltaX: 0, deltaY: 0, diffX: 0, diffY: 0, angle: 0 };
-//     _t.pretouch = {};
-//     _t.preVector = { x: null, y: null };
-//   }
-
-//   touchstart(e, callback = () => { }) {
-//     if (!e.touches) {
-//       return;
-//     }
-
-//     let point = e.touches[0];
-
-//     //记录手指位置
-//     this.touch.startX = point.x;
-//     this.touch.startY = point.y;
-
-//     //双指
-//     if (e.touches.length > 1) {
-//       let point2 = e.touches[1];
-
-//       this.preVector = { x: point2.x - this.touch.startX, y: point2.y - this.touch.startX };
-//       this.startDistance = this.getLen(this.preVector);
-
-//     } else {
-//       this.pretouch = {
-//         startX: this.touch.startX,
-//         startY: this.touch.startY
-//       };
-//     }
-
-//     callback(this.params, e);
-//   }
-
-//   touchmove(e, callback = () => { }) {
-//     if (!e.touches) {
-//       return;
-//     }
-
-//     let point = e.touches[0];
-
-//     //多指
-//     if (e.touches.length > 1) {
-//       let point2 = e.touches[1];
-//       let v = { x: point2.x - point.x, y: point2.y - point.y };
-
-//       if (this.preVector.x != null) {
-//         if (this.startDistance) {
-//           let zoom = this.getLen(v) / this.startDistance;
-//           this.params.zoom = zoom * this.params.lastZoom;
-//         }
-//         this.params.angle = this.getAngle(v, this.preVector);
-//       }
-
-//       this.preVector.x = v.x;
-//       this.preVector.y = v.y;
-
-//     } else {
-//       let diffX = point.x - this.touch.startX;
-//       let diffY = point.y - this.touch.startY;
-
-//       this.params.diffX = diffX;
-//       this.params.diffY = diffY;
-
-//       //记录移动过程中与上一次移动的相对坐标
-//       if (this.movetouch.x) {
-//         this.params.deltaX = point.x - this.movetouch.x;
-//         this.params.deltaY = point.y - this.movetouch.y;
-//       } else {
-//         this.params.deltaX = this.params.deltaY = 0;
-//       }
-
-//       this.movetouch.x = point.x;
-//       this.movetouch.y = point.y;
-//     }
-
-//     callback(this.params, e);
-//   }
-
-//   touchend(e) {
-//     let deltaX = ~~((this.movetouch.x || 0) - this.touch.startX);
-//     let deltaY = ~~((this.movetouch.y || 0) - this.touch.startY);
-//     this.preVector = { x: 0, y: 0 };
-//     this.params.lastZoom = this.params.zoom;
-//     this.params.angle = 0;
-//     this.params.deltaX = this.params.deltaY = this.params.diffX = this.params.diffY =  0;
-//     this.startDistance = null;
-//   }
-
-//   touchcancel(e) {
-//     this.touchend(e);
-//   }
-
-//   getLen(v) {
-//     return Math.sqrt(v.x * v.x + v.y * v.y);
-//   }
-
-//   getAngle(a, b) {
-//     var l = this.getLen(a) * this.getLen(b), cosValue, angle;
-//     if (l) {
-//       cosValue = (a.x * b.x + a.y * b.y) / l;
-//       angle = Math.acos(Math.min(cosValue, 1))
-//       angle = a.x * b.y - b.x * a.y > 0 ? -angle : angle;
-//       return angle * 180 / Math.PI;
-//     }
-//     return 0;
-//   }
-// }
-
-
-// export default Gesture
-
-
 function Gesture(options) {
   options = options || {};
 
@@ -128,6 +11,13 @@ function Gesture(options) {
   this.deltaX = 0; //平移x轴距离
   this.deltaY = 0; //平移y轴距离
   this.isDoubleMove = options.isDoubleMove || false; //是否开启双指移动
+
+  /**
+   * 度量衡说明
+   * 1、angle角度制, 可用于DOM的transform角度变化
+   * 2、radius弧度制, 可用于Canvas的rotate弧度变化
+   */
+  this.weightsAndMeasures = options.weightsAndMeasures || "angle";
 }
 
 Gesture.prototype = {
@@ -156,7 +46,7 @@ Gesture.prototype = {
 
     //回掉函数
     if (callback) {
-      callback({ deltaX: this.deltaX, deltaY: this.deltaY, rotate: this.rotate, scale: this.scale });
+      callback({deltaX: this.deltaX, deltaY: this.deltaY, rotate: this.rotate, scale: this.scale});
     }
   },
   move(e, callback) {
@@ -175,7 +65,7 @@ Gesture.prototype = {
     if (curFingers < this.fingers) {
       this.startPoint = curPoint;
       this.fingers = curFingers;
-      return callback({ deltaX: this.deltaX, deltaY: this.deltaY, rotate: this.rotate, scale: this.scale });
+      return;
     }
 
     /**
@@ -191,7 +81,7 @@ Gesture.prototype = {
       this.fingers = curFingers;
       this.rotate = 0;
       this.scale = 1;
-      return callback({ deltaX: this.deltaX, deltaY: this.deltaY, rotate: this.rotate, scale: this.scale });
+      return;
     }
 
     /**
@@ -238,7 +128,7 @@ Gesture.prototype = {
     this.startPoint = curPoint;
 
     if (callback) {
-      callback({ deltaX: this.deltaX, deltaY: this.deltaY, rotate: this.rotate, scale: this.scale });
+      callback({deltaX: this.deltaX, deltaY: this.deltaY, rotate: this.rotate, scale: this.scale});
     }
   },
 
@@ -273,7 +163,7 @@ Gesture.prototype = {
 
   //计算向量的模
   getLength(v) {
-    if (v) {
+    if (!v) {
       return;
     }
 
@@ -307,7 +197,13 @@ Gesture.prototype = {
     r = r > 1 ? 1 : (r < -1 ? -1 : r);
 
     // 输出角度
-    return Math.acos(r) * direction * 180 / Math.PI;
+    let angleOrRadius = Math.acos(r) * direction * 180 / Math.PI;
+
+    if (this.weightsAndMeasures === 'radius') {
+      angleOrRadius = angleOrRadius * Math.PI / 180;
+    }
+
+    return angleOrRadius
   },
 
   //获取变量类型
@@ -320,7 +216,6 @@ Gesture.prototype.constructor = Gesture;
 
 if (window) {
   window.Gesture = Gesture;
+} else {
+  module.exports = Gesture;
 }
-
-export default Gesture;
-

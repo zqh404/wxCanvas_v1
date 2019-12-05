@@ -232,47 +232,50 @@ class Shape {
   }
 
   start(location, type) {
-    if(type === "onePressTap"){
-      this.isTouch = true;
-      this.isDoubleTouch = false;
-      this.shape.getStartCoordinates(location);
-    }else if(type === "doublePressTap"){
-      this.isTouch = false;
-      this.isDoubleTouch = true;
-      this.shape.getStartPinchCoordinates(location);
-      // console.log('touch double');
-    }
+    this.shape.start(location);
+    // if(type === "onePressTap"){
+    //   this.isTouch = true;
+    //   this.isDoubleTouch = false;
+    //   this.shape.getStartCoordinates(location);
+    // }else if(type === "doublePressTap"){
+    //   this.isTouch = false;
+    //   this.isDoubleTouch = true;
+    //   this.shape.getStartPinchCoordinates(location);
+    //   // console.log('touch double');
+    // }
   }
 
-  move(location, type) {
-    if(type === "onePressTap"){
-      // let flag = Common._detect(this.shape, location)
+  move(e, type) {
+    this.shape.move(e);
 
-      // if (this.isTouch && flag) {
-      //   this.shape.move(location);
-      // }
+    // if(type === "onePressTap"){
+    //   // let flag = Common._detect(this.shape, location)
 
-      if(this.isTouch){
-        this.shape.move(location);
-      }
+    //   // if (this.isTouch && flag) {
+    //   //   this.shape.move(location);
+    //   // }
+
+    //   if(this.isTouch){
+    //     this.shape.move(e);
+    //   }
       
-    }else if(type === "doublePressTap"){
-      // let doubleFlag = this.detectDouble(location);
+    // }else if(type === "doublePressTap"){
+    //   // let doubleFlag = this.detectDouble(location);
 
-      // if(this.isDoubleTouch && doubleFlag){
-      //   this.shape.pinchMove(location);
-      // }
+    //   // if(this.isDoubleTouch && doubleFlag){
+    //   //   this.shape.pinchMove(location);
+    //   // }
 
-      if (this.isDoubleTouch) {
-        this.shape.pinchMove(location);
-      }
-    }
+    //   if (this.isDoubleTouch) {
+    //     this.shape.pinchMove(e);
+    //   }
+    // }
 
   }
 
   end() {
-    this.isTouch = false;
-    this.isDoubleTouch = false;
+    // this.isTouch = false;
+    // this.isDoubleTouch = false;
     this.shape.end();
   }
 
@@ -448,7 +451,7 @@ class WxCanvas {
     if (store.length > 0) {
       for (let key in store) {
         if (store.hasOwnProperty(key)) {
-          store[key].move(location, type);
+          store[key].move(e, type);
         }
       }
     }
@@ -505,7 +508,8 @@ class WxCanvas {
           return 
         }
         
-        this.currentShape.start(location, 'onePressTap');
+        // this.currentShape.start(e, 'onePressTap');
+        this.currentShape.start(e);
         return;
       }
 
@@ -522,19 +526,24 @@ class WxCanvas {
       this.resetAllShapeStatus(); //重置设置所有图形选中状态
       this.currentShape = shape; //记录被选中的图形
 
-      shape.setSelected(true);
-      shape.start(location, 'onePressTap');
-    }else if(finger === 2){  //双指点击进行更细的判断： 缩放、旋转
-      if (!this.currentShape) {
-        return
-      }
-
-      location = [{ x: e.touches[0].x, y: e.touches[0].y }, { x: e.touches[1].x, y: e.touches[1].y }];
-      
-      this.currentShape.start(location, 'doublePressTap');
-    }else{
-      return
+      this.currentShape.setSelected(true);
+      // shape.start(e, 'onePressTap');
+      this.currentShape.start(e);
     }
+
+    
+
+    // else if(finger === 2){  //双指点击进行更细的判断： 缩放、旋转
+    //   if (!this.currentShape) {
+    //     return
+    //   }
+
+    //   location = [{ x: e.touches[0].x, y: e.touches[0].y }, { x: e.touches[1].x, y: e.touches[1].y }];
+      
+    //   this.currentShape.start(e, 'doublePressTap');
+    // }else{
+    //   return
+    // }
 
     this.update(); //更新画布
 
@@ -550,10 +559,10 @@ class WxCanvas {
     //单指情况，进行移动
     if(finger === 1){
       location = { x: e.touches[0].x, y: e.touches[0].y};
-      this.currentShape.move(location, 'onePressTap');
+      this.currentShape.move(e, 'onePressTap');
     }else if(finger === 2){ //双指情况，进行缩放、旋转
       location = [{ x: e.touches[0].x, y: e.touches[0].y }, { x: e.touches[1].x, y: e.touches[1].y }]
-      this.currentShape.move(location, 'doublePressTap');
+      this.currentShape.move(e, 'doublePressTap');
     }else{
       return 
     }

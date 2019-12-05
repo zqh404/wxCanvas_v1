@@ -1,22 +1,6 @@
-/**
- * 公共方法库
- */
-
 module.exports = {
   //浅拷贝
-  // _extends(target, source) {
-  //   return Object.assign ? Object.assign(target, source) : function (target, source) {
-  //     for (let key in source) {
-  //       if (source.hasOwnProperty(key)) {
-  //         target[key] = source[key];
-  //       }
-  //     }
-  //     return target;
-  //   }
-  // },
-
-  //浅拷贝
-  _extends(target) {
+  extends(target) {
     let argLen = arguments.length;
 
     for (let i = 1; i < argLen; i++) {
@@ -31,6 +15,7 @@ module.exports = {
 
     return target;
   },
+
   /**
    * 公共参数，用于图形参数设置，除图片
    * fillMode - 填充模式(fill, stroke)
@@ -38,19 +23,16 @@ module.exports = {
    * fillColor - 填充色
    * strokeColor - 边框色
    * opacity - 不透明度 （0 ~ 1）
-   * apiMode - api绘制方式， 即使用小程序提供的api接口进行绘制, 默认为false
+   * selectedColor - 选中色
    */
-  commonParams() {
+  commonParams(){
     return {
       fillMode: 'fill',
-      fillColor: "",
+      fillColor: '',
       strokeColor: "",
-      selectedColor: '#5CACEE',
+      selectedColor: "#5CACEE",
       lineWidth: 2,
       opacity: 1,
-      isDrag: true,
-      apiMode: false,
-      isSelected: false
     }
   },
 
@@ -80,8 +62,7 @@ module.exports = {
   },
 
   //边缘检测
-  _detect(shape, location) {
-    let {realPoints, offset} = shape;
+  detect(realPoints, offset, location) {
     let flag = this.pnpoly(realPoints.length, realPoints, offset, location);
     return flag;
   },
@@ -114,38 +95,5 @@ module.exports = {
     })
 
     return offset;
-  },
-
-  //计算两点间距离
-  getDistance(point) {
-    return Math.sqrt(point.x * point.x + point.y * point.y);
-  },
-
-  //获取角度,向量求值法
-  getAngele(v1, v2) {  
-    //判断方向，顺时针为 1，逆时针为 -1
-    let direction = v1.x * v2.y - v2.x * v1.y > 0 ? 1 : -1;
-
-    //计算两个向量的模
-    let len1 = this.getDistance(v1), len2 = this.getDistance(v2);
-
-    let mr = len1 * len2, dot, r;
-
-    if(mr === 0){
-      return 0;
-    }
-
-    //数量积公式推导
-    dot = v1.x * v2.x + v1.y * v2.y;
-    r = dot / mr;
-
-    if(r > 1){
-      r = 1;
-    }else if(r < -1){
-      r = -1;
-    }
-
-    //解值并结合方向转化为角度值
-    return Math.acos(r) * direction * 180 / Math.PI;
-  },
+  }
 }

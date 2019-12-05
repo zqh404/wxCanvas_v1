@@ -1,4 +1,5 @@
 import Common from '../../common.js';
+import Gesture from '../../gesture.js';
 
 class Rect {
   constructor(options, guid) {
@@ -40,8 +41,10 @@ class Rect {
 
     _t.pinchStartLen = null;
 
-    _t.lastZoom = 1;
+    // _t.lastZoom = 1;
     _t.tempZoom = 1;
+
+    _t.handle = new Gesture();
   }
 
   _draw(context) {
@@ -135,60 +138,81 @@ class Rect {
     this.offset.maxY = maxY;
   }
 
-  //记录开始坐标
-  getStartCoordinates(location) {
-    let {x, y} = this.options;
-    this.translate.x = x - location.x;
-    this.translate.y = y - location.y;
+  start(e){
+    this.handle.start(e);
   }
+
+  // //记录开始坐标
+  // getStartCoordinates(location) {
+  //   // let {x, y} = this.options;
+  //   // this.translate.x = x - location.x;
+  //   // this.translate.y = y - location.y;
+
+  //   let _t = this;
+  //   this.handle.start(location);
+  // }
 
   //移动
   move(location) {
-    this.options.x = location.x + this.translate.x;
-    this.options.y = location.y + this.translate.y;
+    // this.options.x = location.x + this.translate.x;
+    // this.options.y = location.y + this.translate.y;
+
+    let _t = this;
+    this.handle.move(location, function (params) {
+      _t.options.x += params.deltaX;
+      _t.options.y += params.deltaY;
+      _t.angle += params.rotate;
+      _t.tempZoom *= params.scale;
+    })
   }
 
-  getStartPinchCoordinates(location) {
-    let p1 = location[0], p2 = location[1];
+  // getStartPinchCoordinates(location) {
+  //   // let p1 = location[0], p2 = location[1];
 
-    this.pinch.pre.x = p2.x - p1.x;
-    this.pinch.pre.y = p2.y - p1.y;
+  //   // this.pinch.pre.x = p2.x - p1.x;
+  //   // this.pinch.pre.y = p2.y - p1.y;
 
-    this.pinchStartLen = Common.getDistance(this.pinch.pre);
-  }
+  //   // this.pinchStartLen = Common.getDistance(this.pinch.pre);
 
-  pinchMove(location) {
-    let p1 = location[0], p2 = location[1];
-    this.pinch.last.x = p2.x - p1.x;
-    this.pinch.last.y = p2.y - p1.y;
+  //   this.handle.touchstart(location);
+  // }
 
-    // let pinchLen = Common.getDistance(this.pinch.last) - Common.getDistance(this.pinch.pre);
-    // this.options.w += pinchLen * 0.05;
-    // this.options.h += pinchLen * 0.05;
+  // pinchMove(location) {
+  //   // let p1 = location[0], p2 = location[1];
+  //   // this.pinch.last.x = p2.x - p1.x;
+  //   // this.pinch.last.y = p2.y - p1.y;
     
-    if (this.pinchStartLen > 0){
-      let zoom = Common.getDistance(this.pinch.last) / this.pinchStartLen;
-      this.tempZoom = zoom * this.lastZoom;
-    }
+  //   // if (this.pinchStartLen > 0){
+  //   //   let zoom = Common.getDistance(this.pinch.last) / this.pinchStartLen;
+  //   //   this.tempZoom = zoom * this.lastZoom;
+  //   // }
 
-    this.angle = -Common.getAngele(this.pinch.last, this.pinch.pre);
+  //   // this.angle += Common.getAngele(this.pinch.last, this.pinch.pre);
 
-    this.pinch.pre.x = this.pinch.last.x;
-    this.pinch.pre.y = this.pinch.last.y;
-    console.log(this.angle);
-
-  }
+  //   // this.pinch.pre.x = this.pinch.last.x;
+  //   // this.pinch.pre.y = this.pinch.last.y;
+  //   // console.log(this.angle);
+  //   let _t = this;
+  //   this.handle.move(location, function(params){
+  //     _t.options.x += params.deltaX;
+  //     _t.options.y += params.deltaY;
+  //     _t.angle += params.rotate;
+  //     _t.tempZoom *= params.scale;
+  //   })
+  // }
 
   setSelectStatus(flag){
     this.options.isSelected = flag;
   }
 
-  end(){
-    this.pinch.pre.x = this.pinch.pre.y = 0;
-    this.lastZoom = this.tempZoom;
+  end(e){
+    //this.pinch.pre.x = this.pinch.pre.y = 0;
+    // this.lastZoom = this.tempZoom;
     // this.pinch.pre.x = this.pinch.last.x;
     // this.pinch.pre.y = this.pinch.last.y;
-    this.pinchStartLen = null;
+    //this.pinchStartLen = null;
+
+    this.handle.end(e);
   }
 }
 
