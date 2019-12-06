@@ -116,7 +116,7 @@ class Text{
     let { fontSize, isShadow, fillMode, align, fillColor, textBaseline} = this.params;
 
     //设置字体大小
-    context.setFontSize(fontSize);
+    context.setFontSize(fontSize * scale);
 
     //设置字体颜色
     context.setFillStyle(fillColor || this.defaultColor);
