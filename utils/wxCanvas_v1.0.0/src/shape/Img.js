@@ -23,6 +23,15 @@ class Img {
     }, options || {});
 
     _t.realPoints = [];
+
+    _t.translate = {x: 0, y: 0}; //位移坐标
+
+    _t.offset = {
+      minX: null,
+      minY: null,
+      maxX: null,
+      maxY: null
+    };
   }
 
   getRealPoints() {
@@ -39,20 +48,39 @@ class Img {
 
   _draw(context) {
     this.realPoints = this.getRealPoints();
-
+    this.getRange();
     this.createPath(context, this.realPoints);
   }
 
   createPath(context, points) {
-    let {x, y, w, h, file} = this.options;
+    let {w, h, file} = this.options;
 
     context.save();
-    // context.beginPath();
-
-    context.drawImage(file, x, y, w, h);
-    // context.closePath();
+    context.drawImage(file, points[0][0], points[0][1], w, h);
     context.restore();
-    // context.draw();
+  }
+
+  getRange() {
+    let options = this.realPoints;
+    let {minX, minY, maxX, maxY} = Common.geRange(options);
+
+    this.offset.minX = minX;
+    this.offset.minY = minY;
+    this.offset.maxX = maxX;
+    this.offset.maxY = maxY;
+  }
+
+  //记录开始坐标
+  getStartCoordinates(location){
+    let {x, y} = this.options;
+    this.translate.x = x - location.x;
+    this.translate.y = y - location.y;
+  }
+
+  //移动
+  move(location){
+    this.options.x = location.x + this.translate.x;
+    this.options.y = location.y + this.translate.y;
   }
 }
 

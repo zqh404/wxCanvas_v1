@@ -55,9 +55,8 @@ class Circle {
 
   //绘制
   _draw(context) {
-    if (!this.options.apiMode) {
-      this.realPoints = this.getRealPoints();
-    }
+    this.realPoints = this.getRealPoints();
+    this.getRange();
     this.createPath(context, this.realPoints);
   }
 
@@ -98,10 +97,31 @@ class Circle {
     context.setGlobalAlpha(this.options.opacity);
 
     context.restore();
-    // context.draw();
-
   }
 
+  getRange(){
+    let options = this.realPoints;
+
+    let {minX, minY, maxX, maxY} = Common.geRange(options);
+
+    this.offset.minX = minX;
+    this.offset.minY = minY;
+    this.offset.maxX = maxX;
+    this.offset.maxY = maxY;
+  }
+
+  //记录开始坐标
+  getStartCoordinates(location){
+    let {x, y} = this.options;
+    this.translate.x = x - location.x;
+    this.translate.y = y - location.y;
+  }
+
+  //移动
+  move(location){
+    this.options.x = location.x + this.translate.x;
+    this.options.y = location.y + this.translate.y;
+  }
 }
 
 export default Circle;

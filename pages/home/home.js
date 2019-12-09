@@ -1,4 +1,4 @@
-import {WxCanvas, Shape} from '../../utils/wxCanvas_v1.0.0/index.js';
+import {WxCanvas, Shape} from '../../utils/wxCanvas_v2/index.js';
 
 // pages/home/home.js
 Page({
@@ -44,92 +44,145 @@ Page({
     // context.draw()
 
     this.wxCanvas = new WxCanvas(context, {
-      x: 0, y: 0, w: sWidth, h: sHeight
+      x: 0, y: 0, w: sWidth, h: sHeight, preserveObjectStacking: true
     });
 
-
-
-    var rect = new Shape("rect", { 
-      x: 150, 
-      y: 250, 
-      w: 80, 
-      h: 80, 
-      fillMode: "fill",
-      fillColor: "#36BBA6",
-      strokeColor: "#36BBA6",
-      // apiMode: true
+    var rect = new Shape("Rect", {
+      width: 100,
+      height: 100,
+      r: 40,
+      sides: 4,
+      pos: {tx: 150, ty: 250},
+      params: {
+        fillColor: "#ffBBA6"
+      }
     });
 
-    var rect1 = new Shape("rect", {
-      x: 200,
-      y: 10,
-      w: 50,
-      h: 50,
-      fillMode: "fill",
-      fillColor: "#ffBBA6",
-      strokeColor: "#36BBA6",
-      // apiMode: true
+    var rect1 = new Shape("Rect", {
+      width: 100,
+      height: 100,
+      r: 40,
+      sides: 4,
+      pos: { tx: 100, ty: 100 },
+      params: {
+        fillColor: "#36BBA6"
+      }
     });
 
+    // var rect = new Shape("rect", { 
+    //   x: 150, 
+    //   y: 250, 
+    //   w: 100, 
+    //   h: 100, 
+    //   fillMode: "fill",
+    //   fillColor: "#36BBA6",
+    //   // apiMode: true
+    // });
 
-    var circle = new Shape("circle", {
-      x: 150,
-      y: 250,
-      r: 100,
-      fillMode: "fill",
-      fillColor: "#36BBA6",
-      strokeColor: "#36BBA6",
-      // apiMode: true
-    });
+    // var rect1 = new Shape("rect", {
+    //   x: 170,
+    //   y: 260,
+    //   w: 100,
+    //   h: 100,
+    //   fillMode: "fill",
+    //   fillColor: "#ffBBA6",
+    //   strokeColor: "#36BBA6",
+    //   // apiMode: true
+    // });
 
 
-    var ellipse = new Shape('ellipse', {
-      x: 150,
-      y: 250,
-      a: 100,
-      b: 50,
-      illMode: "fill",
-      fillColor: "#36BBA6",
-      strokeColor: "#36BBA6",
-      apiMode: true
-    })
+    // var circle = new Shape("circle", {
+    //   x: 150,
+    //   y: 250,
+    //   r: 100,
+    //   fillMode: "fill",
+    //   fillColor: "#36BBf0",
+    //   strokeColor: "#36BBf0",
+    //   // apiMode: true
+    // });
 
-    var polygon = new Shape('polygon', {
-      x: 150,
-      y: 250,
-      r: 40, 
-      sides: 8,
-      illMode: "fill",
-      fillColor: "#36BBA6",
-      strokeColor: "#36BBA6",
-      // apiMode: true
-    });
 
-    var cshape = new Shape('cshape', {
-      points: [[145, 30], [0, -211], [300, 400], [113, 50], [30, -31], [3, 40], [123, 90], [20, -1], [30, 60], [131, 40], [90, -12], [0, 400], [13, 6], [70, -17], [30, 42]],
-      fillMode: "fill",
-      fillColor: "#36BBA6",
-      strokeColor: "#36BBA6",
-    })
+    // var ellipse = new Shape('ellipse', {
+    //   x: 150,
+    //   y: 250,
+    //   a: 100,
+    //   b: 50,
+    //   illMode: "fill",
+    //   fillColor: "#7FFFD4",
+    //   strokeColor: "#7FFFD4",
+    //   apiMode: true
+    // })
 
-    var line = new Shape('line', {
-      points: [[145, 30], [0, -211], [300, 400], [113, 50], [30, -31], [3, 40], [123, 90], [20, -1], [30, 60], [131, 40], [90, -12], [0, 400], [13, 6], [70, -17], [30, 42]],
-      fillMode: "fill",
-      fillColor: "#36BBA6",
-      strokeColor: "#36BBA6",
-    })
+    // var polygon = new Shape('polygon', {
+    //   x: 150,
+    //   y: 250,
+    //   r: 40, 
+    //   sides: 8,
+    //   illMode: "fill",
+    //   fillColor: "#36BBA6",
+    //   strokeColor: "#36BBA6",
+    //   // apiMode: true
+    // });
 
-    let text = new Shape('text', { x: 100, y: 100, text: "hello World", fillMode: "fill", fillColor: "#0CA5B0", fontSize: 20, rotate: 0, align: "center", textBaseline: 'middle', needShadow: true })
+    // var cshape = new Shape('cshape', {
+    //   points: [[145, 30], [0, -211], [300, 400], [113, 50], [30, -31], [3, 40], [123, 90], [20, -1], [30, 60], [131, 40], [90, -12], [0, 400], [13, 6], [70, -17], [30, 42]],
+    //   fillMode: "fill",
+    //   fillColor: "#36BBA6",
+    //   strokeColor: "#36BBA6",
+    // })
 
-    var img = new Shape("img", { x: 100, y: 100, w: 100, h: 100, file: "./logo.png"});
+    // var line = new Shape('line', {
+    //   points: [[145, 30], [0, -211], [300, 400], [113, 50], [30, -31], [3, 40], [123, 90], [20, -1], [30, 60], [131, 40], [90, -12], [0, 400], [13, 6], [70, -17], [30, 42]],
+    //   fillMode: "fill",
+    //   fillColor: "#36BBA6",
+    //   strokeColor: "#36BBA6",
+    // })
 
-    // this.wxCanvas.add(circle);
-    // this.wxCanvas.add(text);
+    // let text = new Shape('text', { x: 100, y: 100, text: "hello World", fillMode: "fill", fillColor: "#0CA5B0", fontSize: 20, rotate: 0, align: "center", textBaseline: 'middle', needShadow: true })
+
+    // var img = new Shape("img", { x: 100, y: 100, w: 100, h: 100, file: "./logo.png"});
+
+    // this.wxCanvas.add(polygon);
+  
     // this.wxCanvas.add(img);
+    // this.wxCanvas.add(polygon);
 
-    this.wxCanvas.add(rect);
+    var img = new Shape("Image", {
+      width: 100,
+      height: 100,
+      imageUrl: "./logo.png",
+      pos: { tx: 250, ty: 300 }
+    });
+
+    var ear = new Shape("Image", {
+      width: 100,
+      height: 40,
+      imageUrl: "./ear.png",
+      pos: { tx: 200, ty: 300 }
+    });
+
+    var neck = new Shape("Image", {
+      width: 100,
+      height: 100,
+      imageUrl: "./neck.png",
+      pos: { tx: 100, ty: 250 }
+    });
+
+    var text = new Shape("Text", {
+      text: "hello world",
+      pos:{
+        tx: 50, ty: 50
+      }
+    });
+
+    this.wxCanvas.add(text);
+    this.wxCanvas.add(img);
+    this.wxCanvas.add(ear);
+    this.wxCanvas.add(neck);
     this.wxCanvas.add(rect1);
-
+    this.wxCanvas.add(rect);
+    // this.wxCanvas.add(text);
+    // this.wxCanvas.add(ellipse);
     // this.wxCanvas.removeShape(img);
 
     this.wxCanvas.update();

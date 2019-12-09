@@ -40,26 +40,59 @@ class Text {
     _t.realPoints = [];
 
     _t.defaultColor = "black";
+
+    _t.translate = {x: 0, y: 0}; //位移坐标
+
+    _t.offset = {
+      minX: null,
+      minY: null,
+      maxX: null,
+      maxY: null
+    }
+
+    _t.regxStr = /[\u4e00-\u9fa5]/; //中文编码范围
   }
 
   //检查参数类似是否合法
-  check(){
+  check() {
     let {text} = this.options;
 
-    if(typeof text !== "string"){
+    if (typeof text !== "string") {
       throw Error("error: text must be string type!");
     }
   }
 
-  getRealPoints(){
+  getRealPoints() {
+    let {x, y, text, fontSize} = this.options;
+    let points = []; //存储文字四边的坐标
+    let len = text.length; //文字长度
+    let w = 0, h = fontSize;
 
+    //计算文字盒子的长宽
+    for (let i = 0; i < len; i++) {
+      let item = text[i];
+      if (this.regxStr.test(item)) {
+        w += fontSize;
+      } else {
+        w += fontSize / 2;
+      }
+    }
+
+    points.push([x - w / 2, y - h / 2]);
+    points.push([x - w / 2, y + h / 2]);
+    points.push([x + w / 2, y + h / 2]);
+    points.push([x + w / 2, y - h / 2]);
+
+    return points;
   }
 
-  _draw(context){
+  _draw(context) {
+    this.realPoints = this.getRealPoints();
+    this.getRange();
     this.createPath(context);
   }
 
-  createPath(context){
+  createPath(context) {
     context.save();
 
     let {x, y, text, fontSize, isShadow, fillMode, align, fillColor, textBaseline} = this.options;
@@ -68,7 +101,7 @@ class Text {
     context.setFontSize(fontSize);
 
     //设置字体颜色
-    context.setFillStyle(fillColor|| this.defaultColor);
+    context.setFillStyle(fillColor || this.defaultColor);
     context.fill();
 
     //设置文字对齐方式
@@ -88,7 +121,45 @@ class Text {
 
   }
 
+  baseline(type, value) {
+    return {
+      "normal": 2,
+      "bottom": -value / 2,
+      "middle": 0,
+      "top": value / 2
+    }[type]
+  }
 
+  align(type, value) {
+    return {
+      "left": value / 2,
+      "center": 0,
+      "right": -value / 2
+    }[type]
+  }
+
+  getRange() {
+    let options = this.realPoints;
+    let {minX, minY, maxX, maxY} = Common.geRange(options);
+
+    this.offset.minX = minX;
+    this.offset.minY = minY;
+    this.offset.maxX = maxX;
+    this.offset.maxY = maxY;
+  }
+
+  //记录开始坐标
+  getStartCoordinates(location){
+    let {x, y} = this.options;
+    this.translate.x = x - location.x;
+    this.translate.y = y - location.y;
+  }
+
+  //移动
+  move(location){
+    this.options.x = location.x + this.translate.x;
+    this.options.y = location.y + this.translate.y;
+  }
 }
 
 export default Text;
